@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative 'tasks/placeholder'
+require_relative 'tasks/generate'
 
 module RakeSecrets
   module Tasks
