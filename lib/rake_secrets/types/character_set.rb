@@ -2,13 +2,10 @@
 
 require 'securerandom'
 
-require_relative './base'
-
 module RakeSecrets
   module Types
-    class CharacterSet < Base
-      def initialize(character_set, opts)
-        super()
+    class CharacterSet
+      def initialize(character_set, opts = {})
         @character_set = character_set
         @character_count = character_set.length
         @length = opts[:length] || 32

@@ -1,12 +1,9 @@
 # frozen_string_literal: true
 
-require_relative './base'
-
 module RakeSecrets
   module Types
-    class Constant < Base
+    class Constant
       def initialize(value)
-        super()
         @value = value
       end
 

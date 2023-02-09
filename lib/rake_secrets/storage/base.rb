@@ -5,7 +5,6 @@ require 'rake_factory'
 module RakeSecrets
   module Storage
     class UnsupportedOperationError < StandardError
-
     end
 
     class Base

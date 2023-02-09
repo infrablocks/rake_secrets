@@ -1,10 +1,8 @@
 # frozen_string_literal: true
 
-require_relative './base'
-
 module RakeSecrets
   module Transformers
-    class Identity < Base
+    class Identity
       def transform(value)
         value
       end
