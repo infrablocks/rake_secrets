@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'rake_secrets/errors'
 require 'rake_secrets/tasks'
 require 'rake_secrets/storage'
 require 'rake_secrets/types'

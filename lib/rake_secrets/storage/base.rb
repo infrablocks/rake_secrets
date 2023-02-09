@@ -1,23 +1,20 @@
 # frozen_string_literal: true
 
-require 'rake_factory'
+require_relative '../errors'
 
 module RakeSecrets
   module Storage
-    class UnsupportedOperationError < StandardError
-    end
-
     class Base
       def store(_path, _content)
-        raise(UnsupportedOperationError, '#store not supported.')
+        raise(Errors::UnsupportedOperationError, '#store not supported.')
       end
 
       def remove(_path)
-        raise(UnsupportedOperationError, '#remove not supported.')
+        raise(Errors::UnsupportedOperationError, '#remove not supported.')
       end
 
-      def get(_path)
-        raise(UnsupportedOperationError, '#get not supported.')
+      def retrieve(_path)
+        raise(Errors::UnsupportedOperationError, '#retrieve not supported.')
       end
     end
   end

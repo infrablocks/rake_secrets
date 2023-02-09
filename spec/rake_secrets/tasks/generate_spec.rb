@@ -58,7 +58,7 @@ describe RakeSecrets::Tasks::Generate do
 
       Rake::Task['secrets:generate'].invoke
 
-      expect(backend.get('secrets/database/password'))
+      expect(backend.retrieve('secrets/database/password'))
         .to(eq('supersecret'))
     end
   end
@@ -83,7 +83,7 @@ describe RakeSecrets::Tasks::Generate do
 
       Rake::Task['secrets:generate'].invoke
 
-      expect(backend.get('secrets/database/password'))
+      expect(backend.retrieve('secrets/database/password'))
         .to(eq("---\ndatabase_password: \"supersecret\"\n"))
     end
   end
