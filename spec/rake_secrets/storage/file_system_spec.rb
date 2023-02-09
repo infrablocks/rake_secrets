@@ -9,11 +9,45 @@ describe RakeSecrets::Storage::FileSystem do
       content = 'supersecret'
       storage = described_class.new
 
+      stub_make_directory
       stub_file_write(path)
 
       storage.store(path, content)
 
       expect(File).to(have_received(:write).with(path, content))
+    end
+
+    it 'ensures parent directory exists' do
+      path = 'deeply/nested/path'
+      content = 'supersecret'
+      storage = described_class.new
+
+      stub_make_directory
+      stub_file_write(path)
+
+      storage.store(path, content)
+
+      expect(FileUtils).to(have_received(:mkdir_p).with('deeply/nested'))
+    end
+
+    it 'creates parent directory before trying to write the file' do
+      path = 'deeply/nested/path'
+      content = 'supersecret'
+      storage = described_class.new
+
+      stub_make_directory
+      stub_file_write(path)
+
+      storage.store(path, content)
+
+      expect(FileUtils)
+        .to(have_received(:mkdir_p)
+              .with('deeply/nested')
+              .ordered)
+      expect(File)
+        .to(have_received(:write)
+              .with(path, content)
+              .ordered)
     end
 
     [
@@ -30,6 +64,7 @@ describe RakeSecrets::Storage::FileSystem do
 
         storage = described_class.new
 
+        stub_make_directory
         stub_file_write(path, outcome: error)
 
         expect { storage.store(path, content) }.to(
@@ -152,6 +187,10 @@ describe RakeSecrets::Storage::FileSystem do
 
   def stub_file_not_exists(path)
     allow(File).to(receive(:exist?).with(path).and_return(false))
+  end
+
+  def stub_make_directory
+    allow(FileUtils).to(receive(:mkdir_p))
   end
 
   def stub_file_write(path, opts = {})

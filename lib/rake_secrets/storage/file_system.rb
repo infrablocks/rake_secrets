@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'fileutils'
+
 require_relative './base'
 require_relative '../errors'
 
@@ -7,6 +9,7 @@ module RakeSecrets
   module Storage
     class FileSystem < Base
       def store(path, content)
+        FileUtils.mkdir_p(File.dirname(path))
         File.write(path, content)
       rescue SystemCallError, IOError
         raise(
