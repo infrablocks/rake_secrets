@@ -5,6 +5,7 @@ TODO
   * Add support for removing by 'directory'
   * Add base_path for relative paths, defaulting to Dir.cwd
 * Storage::InMemory
+  * Add support for removing by 'directory'
   * Add base_path for relative paths, defaulting to /
 
 * Collect
@@ -24,6 +25,9 @@ TODO
 * Destroy
   * Takes a list of secrets paths
   * Uses the backend to delete each secret path
+
+* Standard task set
+  * How should we handle arguments?
 
 * Placeholder tasks
   * Placeholder::Create

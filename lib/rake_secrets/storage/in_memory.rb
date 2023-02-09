@@ -16,23 +16,33 @@ module RakeSecrets
       end
 
       def remove(path)
-        ensure_path_exists(path)
+        paths = matching_paths(path)
 
-        @persistence.delete(path)
+        if paths.empty?
+          raise(Errors::NoSuchPathError, "Path '#{path}' not in storage.")
+        end
+
+        paths.each do |p|
+          @persistence.delete(p)
+        end
       end
 
       def retrieve(path)
-        ensure_path_exists(path)
+        unless contains_exact_path?(path)
+          raise(Errors::NoSuchPathError, "Path '#{path}' not in storage.")
+        end
 
         @persistence[path]
       end
 
       private
 
-      def ensure_path_exists(path)
-        return if @persistence.include?(path)
+      def contains_exact_path?(path)
+        @persistence.include?(path)
+      end
 
-        raise(Errors::NoSuchPathError, "Path '#{path}' not in storage.")
+      def matching_paths(path)
+        @persistence.select { |k| k == path or k.start_with?(path) }.keys
       end
     end
   end

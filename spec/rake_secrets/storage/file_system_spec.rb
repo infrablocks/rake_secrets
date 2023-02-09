@@ -77,7 +77,21 @@ describe RakeSecrets::Storage::FileSystem do
   end
 
   describe '#remove' do
-    it 'removes the content at the provided path when the path exists' do
+    it 'removes the content at the provided path when the path exists and ' \
+       'represents a file' do
+      path = 'path/to/secret'
+      storage = described_class.new
+
+      stub_file_exists(path)
+      stub_file_delete(path)
+
+      storage.remove(path)
+
+      expect(File).to(have_received(:delete).with(path))
+    end
+
+    it 'recursively removes the directory at the provided path when the ' \
+       'path exists and represents a directory' do
       path = 'path/to/secret'
       storage = described_class.new
 

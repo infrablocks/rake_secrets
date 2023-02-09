@@ -29,6 +29,34 @@ describe RakeSecrets::Storage::InMemory do
       )
     end
 
+    it 'removes all subpaths when provided path is a directory' do
+      path1 = 'path/to/secret1'
+      path2 = 'path/to/secret2'
+      path3 = 'other/secret'
+
+      content1 = 'supersecret1'
+      content2 = 'supersecret2'
+      content3 = 'supersecret3'
+
+      parent_path = 'path/to'
+
+      storage = described_class.new
+
+      storage.store(path1, content1)
+      storage.store(path2, content2)
+      storage.store(path3, content3)
+
+      storage.remove(parent_path)
+
+      expect { storage.retrieve(path1) }.to(
+        raise_error(RakeSecrets::Errors::NoSuchPathError)
+      )
+      expect { storage.retrieve(path2) }.to(
+        raise_error(RakeSecrets::Errors::NoSuchPathError)
+      )
+      expect(storage.retrieve(path3)).to(eq(content3))
+    end
+
     it 'raises a NoSuchPathError when the provided path is not present' do
       path = 'path/to/secret'
       storage = described_class.new
