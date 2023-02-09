@@ -8,18 +8,33 @@ module RakeSecrets
     class FileSystem < Base
       def store(path, content)
         File.write(path, content)
+      rescue SystemCallError, IOError
+        raise(
+          RakeSecrets::Errors::StoreError,
+          "Failed to store at path: '#{path}'."
+        )
       end
 
       def remove(path)
         ensure_path_exists(path)
 
         File.delete(path)
+      rescue SystemCallError
+        raise(
+          RakeSecrets::Errors::RemoveError,
+          "Failed to remove from path: '#{path}'."
+        )
       end
 
       def retrieve(path)
         ensure_path_exists(path)
 
         File.read(path)
+      rescue SystemCallError
+        raise(
+          RakeSecrets::Errors::RetrieveError,
+          "Failed to retrieve from path: '#{path}'."
+        )
       end
 
       private

@@ -15,6 +15,30 @@ describe RakeSecrets::Storage::FileSystem do
 
       expect(File).to(have_received(:write).with(path, content))
     end
+
+    [
+      Errno::EACCES,
+      Errno::EISDIR,
+      Errno::ENOSPC,
+      IOError
+    ].each do |error_class|
+      it 'raises a StoreError containing the underlying error when ' \
+         "File.write raises a #{error_class} error" do
+        path = './secret'
+        content = 'supersecret'
+        error = error_class.new('Something went wrong')
+
+        storage = described_class.new
+
+        stub_file_write(path, outcome: error)
+
+        expect { storage.store(path, content) }.to(
+          raise_error(RakeSecrets::Errors::StoreError) do |e|
+            expect(e.cause).to(eq(error))
+          end
+        )
+      end
+    end
   end
 
   describe '#remove' do
@@ -41,6 +65,32 @@ describe RakeSecrets::Storage::FileSystem do
         raise_error(RakeSecrets::Errors::NoSuchPathError)
       )
     end
+
+    [
+      Errno::ENOENT,
+      Errno::EACCES,
+      Errno::EPERM,
+      Errno::EBUSY,
+      Errno::EISDIR,
+      Errno::ENOTEMPTY
+    ].each do |error_class|
+      it 'raises a RemoveError containing the underlying error when ' \
+         "File.delete raises a #{error_class} error" do
+        path = 'path/to/secret'
+        error = error_class.new('Something went wrong')
+
+        storage = described_class.new
+
+        stub_file_exists(path)
+        stub_file_delete(path, outcome: error)
+
+        expect { storage.remove(path) }.to(
+          raise_error(RakeSecrets::Errors::RemoveError) do |e|
+            expect(e.cause).to(eq(error))
+          end
+        )
+      end
+    end
   end
 
   describe '#retrieve' do
@@ -50,7 +100,7 @@ describe RakeSecrets::Storage::FileSystem do
       storage = described_class.new
 
       stub_file_exists(path)
-      stub_file_read(path, content)
+      stub_file_read(path, { content: content })
 
       retrieved = storage.retrieve(path)
 
@@ -68,6 +118,32 @@ describe RakeSecrets::Storage::FileSystem do
         raise_error(RakeSecrets::Errors::NoSuchPathError)
       )
     end
+
+    [
+      Errno::ENOENT,
+      Errno::EACCES,
+      Errno::EPERM,
+      Errno::EBUSY,
+      Errno::EISDIR,
+      Errno::ENOTEMPTY
+    ].each do |error_class|
+      it 'raises a RetrieveError containing the underlying error when ' \
+         "File.read raises a #{error_class} error" do
+        path = 'path/to/secret'
+        error = error_class.new('Something went wrong')
+
+        storage = described_class.new
+
+        stub_file_exists(path)
+        stub_file_read(path, outcome: error)
+
+        expect { storage.retrieve(path) }.to(
+          raise_error(RakeSecrets::Errors::RetrieveError) do |e|
+            expect(e.cause).to(eq(error))
+          end
+        )
+      end
+    end
   end
 
   def stub_file_exists(path)
@@ -78,15 +154,36 @@ describe RakeSecrets::Storage::FileSystem do
     allow(File).to(receive(:exist?).with(path).and_return(false))
   end
 
-  def stub_file_write(path)
-    allow(File).to(receive(:write).with(path, anything))
+  def stub_file_write(path, opts = {})
+    opts = { outcome: :success }.merge(opts)
+    if opts[:outcome].is_a?(StandardError)
+      allow(File).to(receive(:write)
+                       .with(path, anything)
+                       .and_raise(opts[:outcome]))
+    else
+      allow(File).to(receive(:write).with(path, anything))
+    end
   end
 
-  def stub_file_delete(path)
-    allow(File).to(receive(:delete).with(path))
+  def stub_file_delete(path, opts = {})
+    opts = { outcome: :success }.merge(opts)
+    if opts[:outcome].is_a?(StandardError)
+      allow(File).to(receive(:delete)
+                       .with(path)
+                       .and_raise(opts[:outcome]))
+    else
+      allow(File).to(receive(:delete).with(path))
+    end
   end
 
-  def stub_file_read(path, content = '')
-    allow(File).to(receive(:read).with(path).and_return(content))
+  def stub_file_read(path, opts = {})
+    opts = { outcome: :success, content: '' }.merge(opts)
+    if opts[:outcome].is_a?(StandardError)
+      allow(File).to(receive(:read)
+                       .with(path)
+                       .and_raise(opts[:outcome]))
+    else
+      allow(File).to(receive(:read).with(path).and_return(opts[:content]))
+    end
   end
 end
