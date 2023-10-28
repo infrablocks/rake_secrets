@@ -2,11 +2,11 @@ TODO
 ====
 
 * Storage::FileSystem
-  * Add support for removing by 'directory'
   * Add base_path for relative paths, defaulting to Dir.cwd
+  * Throw error when #retrieve on directory
 * Storage::InMemory
-  * Add support for removing by 'directory'
   * Add base_path for relative paths, defaulting to /
+  * Throw error when #retrieve on directory
 
 * Collect
   * Collect a secret from the terminal

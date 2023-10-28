@@ -2,14 +2,15 @@
 
 require 'spec_helper'
 
-describe RakeSecrets::Storage::FileSystem do
+describe Larder::Backends::FileSystem do
   describe '#store' do
     it 'stores the provided content at the provided path on disk' do
       path = './secret'
+      directory = File.dirname(path)
       content = 'supersecret'
       storage = described_class.new
 
-      stub_make_directory
+      stub_make_directory(directory)
       stub_file_write(path)
 
       storage.store(path, content)
@@ -19,10 +20,11 @@ describe RakeSecrets::Storage::FileSystem do
 
     it 'ensures parent directory exists' do
       path = 'deeply/nested/path'
+      directory = File.dirname(path)
       content = 'supersecret'
       storage = described_class.new
 
-      stub_make_directory
+      stub_make_directory(directory)
       stub_file_write(path)
 
       storage.store(path, content)
@@ -32,10 +34,11 @@ describe RakeSecrets::Storage::FileSystem do
 
     it 'creates parent directory before trying to write the file' do
       path = 'deeply/nested/path'
+      directory = File.dirname(path)
       content = 'supersecret'
       storage = described_class.new
 
-      stub_make_directory
+      stub_make_directory(directory)
       stub_file_write(path)
 
       storage.store(path, content)
@@ -59,16 +62,42 @@ describe RakeSecrets::Storage::FileSystem do
       it 'raises a StoreError containing the underlying error when ' \
          "File.write raises a #{error_class} error" do
         path = './secret'
+        directory = File.dirname(path)
         content = 'supersecret'
         error = error_class.new('Something went wrong')
 
         storage = described_class.new
 
-        stub_make_directory
+        stub_make_directory(directory)
         stub_file_write(path, outcome: error)
 
         expect { storage.store(path, content) }.to(
-          raise_error(RakeSecrets::Errors::StoreError) do |e|
+          raise_error(Larder::Errors::StoreError) do |e|
+            expect(e.cause).to(eq(error))
+          end
+        )
+      end
+    end
+
+    [
+      Errno::ENOENT,
+      Errno::EEXIST,
+      Errno::EACCES,
+      Errno::ENOTDIR
+    ].each do |error_class|
+      it 'raises a StoreError containing the underlying error when ' \
+         "FileUtils.mkdir_p raises a #{error_class} error" do
+        path = './some/secret'
+        directory = File.dirname(path)
+        content = 'supersecret'
+        error = error_class.new('Something went wrong')
+
+        storage = described_class.new
+
+        stub_make_directory(directory, outcome: error)
+
+        expect { storage.store(path, content) }.to(
+          raise_error(Larder::Errors::StoreError) do |e|
             expect(e.cause).to(eq(error))
           end
         )
@@ -82,7 +111,8 @@ describe RakeSecrets::Storage::FileSystem do
       path = 'path/to/secret'
       storage = described_class.new
 
-      stub_file_exists(path)
+      stub_path_exists(path)
+      stub_path_as_file(path)
       stub_file_delete(path)
 
       storage.remove(path)
@@ -92,26 +122,27 @@ describe RakeSecrets::Storage::FileSystem do
 
     it 'recursively removes the directory at the provided path when the ' \
        'path exists and represents a directory' do
-      path = 'path/to/secret'
+      path = 'path/to/secrets/directory'
       storage = described_class.new
 
-      stub_file_exists(path)
-      stub_file_delete(path)
+      stub_path_exists(path)
+      stub_path_as_directory(path)
+      stub_recursive_delete(path)
 
       storage.remove(path)
 
-      expect(File).to(have_received(:delete).with(path))
+      expect(FileUtils).to(have_received(:rm_rf).with(path))
     end
 
-    it 'raises a NoSuchPathError when the path does not exist' do
+    it 'raises a PathDoesNotExistError when the path does not exist' do
       path = 'non/existing/path'
       storage = described_class.new
 
-      stub_file_not_exists(path)
+      stub_path_not_exists(path)
       stub_file_delete(path)
 
       expect { storage.remove(path) }.to(
-        raise_error(RakeSecrets::Errors::NoSuchPathError)
+        raise_error(Larder::Errors::PathDoesNotExistError)
       )
     end
 
@@ -130,11 +161,37 @@ describe RakeSecrets::Storage::FileSystem do
 
         storage = described_class.new
 
-        stub_file_exists(path)
+        stub_path_exists(path)
+        stub_path_as_file(path)
         stub_file_delete(path, outcome: error)
 
         expect { storage.remove(path) }.to(
-          raise_error(RakeSecrets::Errors::RemoveError) do |e|
+          raise_error(Larder::Errors::RemoveError) do |e|
+            expect(e.cause).to(eq(error))
+          end
+        )
+      end
+    end
+
+    [
+      Errno::ENOENT,
+      Errno::EACCES,
+      Errno::EPERM,
+      Errno::EISDIR
+    ].each do |error_class|
+      it 'raises a RemoveError containing the underlying error when ' \
+         "FileUtils.rm_rf raises a #{error_class} error" do
+        path = 'path/to/secret'
+        error = error_class.new('Something went wrong')
+
+        storage = described_class.new
+
+        stub_path_exists(path)
+        stub_path_as_directory(path)
+        stub_recursive_delete(path, outcome: error)
+
+        expect { storage.remove(path) }.to(
+          raise_error(Larder::Errors::RemoveError) do |e|
             expect(e.cause).to(eq(error))
           end
         )
@@ -148,7 +205,7 @@ describe RakeSecrets::Storage::FileSystem do
       content = 'somesecret'
       storage = described_class.new
 
-      stub_file_exists(path)
+      stub_path_exists(path)
       stub_file_read(path, { content: content })
 
       retrieved = storage.retrieve(path)
@@ -156,15 +213,15 @@ describe RakeSecrets::Storage::FileSystem do
       expect(retrieved).to(eq(content))
     end
 
-    it 'raises a NoSuchPathError when the path does not exist' do
+    it 'raises a PathDoesNotExistError when the path does not exist' do
       path = 'non/existing/path'
       storage = described_class.new
 
-      stub_file_not_exists(path)
+      stub_path_not_exists(path)
       stub_file_read(path)
 
       expect { storage.remove(path) }.to(
-        raise_error(RakeSecrets::Errors::NoSuchPathError)
+        raise_error(Larder::Errors::PathDoesNotExistError)
       )
     end
 
@@ -183,11 +240,11 @@ describe RakeSecrets::Storage::FileSystem do
 
         storage = described_class.new
 
-        stub_file_exists(path)
+        stub_path_exists(path)
         stub_file_read(path, outcome: error)
 
         expect { storage.retrieve(path) }.to(
-          raise_error(RakeSecrets::Errors::RetrieveError) do |e|
+          raise_error(Larder::Errors::RetrieveError) do |e|
             expect(e.cause).to(eq(error))
           end
         )
@@ -195,16 +252,44 @@ describe RakeSecrets::Storage::FileSystem do
     end
   end
 
-  def stub_file_exists(path)
+  def stub_path_exists(path)
     allow(File).to(receive(:exist?).with(path).and_return(true))
   end
 
-  def stub_file_not_exists(path)
+  def stub_path_not_exists(path)
     allow(File).to(receive(:exist?).with(path).and_return(false))
   end
 
-  def stub_make_directory
-    allow(FileUtils).to(receive(:mkdir_p))
+  def stub_path_as_directory(path)
+    allow(File).to(receive(:directory?).with(path).and_return(true))
+    allow(File).to(receive(:file?).with(path).and_return(false))
+  end
+
+  def stub_path_as_file(path)
+    allow(File).to(receive(:directory?).with(path).and_return(false))
+    allow(File).to(receive(:file?).with(path).and_return(true))
+  end
+
+  def stub_make_directory(path, opts = {})
+    opts = { outcome: :success }.merge(opts)
+    if opts[:outcome].is_a?(StandardError)
+      allow(FileUtils).to(receive(:mkdir_p)
+                       .with(path)
+                       .and_raise(opts[:outcome]))
+    else
+      allow(FileUtils).to(receive(:mkdir_p).with(path))
+    end
+  end
+
+  def stub_recursive_delete(path, opts = {})
+    opts = { outcome: :success }.merge(opts)
+    if opts[:outcome].is_a?(StandardError)
+      allow(FileUtils).to(receive(:rm_rf)
+                            .with(path)
+                            .and_raise(opts[:outcome]))
+    else
+      allow(FileUtils).to(receive(:rm_rf).with(path))
+    end
   end
 
   def stub_file_write(path, opts = {})

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module RakeSecrets
+module Larder
   module Errors
     class StoreError < StandardError
     end

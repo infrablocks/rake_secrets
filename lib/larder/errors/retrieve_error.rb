@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-module RakeSecrets
+module Larder
   module Errors
-    class NoSuchPathError < StandardError
+    class RetrieveError < StandardError
     end
   end
 end
