@@ -27,5 +27,11 @@ RSpec/ExampleLength:
 RSpec/MultipleExpectations:
   Enabled: false
 
+RSpec/NestedGroups:
+  Max: 4
+
 Gemspec/RequireMFA:
+  Enabled: false
+
+Gemspec/DevelopmentDependencies:
   Enabled: false
