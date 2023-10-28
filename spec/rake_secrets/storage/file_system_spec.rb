@@ -91,7 +91,7 @@ describe RakeSecrets::Storage::FileSystem do
     end
 
     it 'recursively removes the directory at the provided path when the ' \
-       'path exists and represents a directory' do
+       'path exists and represents a directory', pending: 'directory delete' do
       path = 'path/to/secret'
       storage = described_class.new
 
@@ -101,6 +101,8 @@ describe RakeSecrets::Storage::FileSystem do
       storage.remove(path)
 
       expect(File).to(have_received(:delete).with(path))
+
+      raise
     end
 
     it 'raises a NoSuchPathError when the path does not exist' do

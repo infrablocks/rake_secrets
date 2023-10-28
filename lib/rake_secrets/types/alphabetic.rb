@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative './character_set'
+require_relative 'character_set'
 
 module RakeSecrets
   module Types

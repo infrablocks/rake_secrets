@@ -2,7 +2,7 @@
 
 require 'fileutils'
 
-require_relative './base'
+require_relative 'base'
 require_relative '../errors'
 
 module RakeSecrets
