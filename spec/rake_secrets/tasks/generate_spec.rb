@@ -52,8 +52,8 @@ describe RakeSecrets::Tasks::Generate do
       define_task(
         id: 'database_password',
         path: 'secrets/database/password',
-        specification: specification,
-        backend: backend
+        specification:,
+        backend:
       )
 
       Rake::Task['secrets:generate'].invoke
@@ -76,9 +76,9 @@ describe RakeSecrets::Tasks::Generate do
       define_task(
         id: 'database_password',
         path: 'secrets/database/password',
-        specification: specification,
-        transformer: transformer,
-        backend: backend
+        specification:,
+        transformer:,
+        backend:
       )
 
       Rake::Task['secrets:generate'].invoke

@@ -11,7 +11,7 @@ module RakeSecrets
       end
 
       def transform(value)
-        @template.render(value: value)
+        @template.render(value:)
       end
     end
   end

@@ -151,7 +151,7 @@ describe RakeSecrets::Storage::FileSystem do
       storage = described_class.new
 
       stub_file_exists(path)
-      stub_file_read(path, { content: content })
+      stub_file_read(path, { content: })
 
       retrieved = storage.retrieve(path)
 
