@@ -91,7 +91,7 @@ commands:
     steps:
       - add_ssh_keys:
           fingerprints:
-            - "SHA256:YqbFh6l2eEtwPobkPW303NKNzbvbw4rq6sAKBOH+DWI"
+            - "SHA256:EdtLTGeHG0rQpTjYEBb0M7y/5MEJw2iIYCmQfq/ybpQ"
       - run: ./scripts/ci/common/configure-rubygems.sh
 
   configure_tools:
