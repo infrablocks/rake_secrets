@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
-require 'set'
 
 describe RakeSecrets::Types::Alphanumeric do
   describe '#generate' do
